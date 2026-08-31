@@ -993,9 +993,9 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
   </div>
-  <div class="chat-messages" id="chatMessages">
-    <div class="msg msg-in">Olá! 👋 Conte um pouco sobre o seu caso que já direciono para o time certo.</div>
-    <div class="quick-replies" id="quickReplies">
+  <div class="chat-messages" id="chatMessages" aria-live="polite">
+    <div class="msg msg-in" id="chatGreeting">Olá! 👋 Pra eu te direcionar certinho, qual é o seu nome?</div>
+    <div class="quick-replies" id="quickReplies" hidden>
       <button type="button" class="quick-reply" data-area="Direito Trabalhista">Trabalhista</button>
       <button type="button" class="quick-reply" data-area="Direito de Família">Família</button>
       <button type="button" class="quick-reply" data-area="Direito Previdenciário">Previdenciário</button>
@@ -1012,6 +1012,10 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
   <a href="https://wa.me/5571999190853" target="_blank" rel="noopener" class="chat-whatsapp-fallback">Prefere WhatsApp? Continue por lá →</a>
 </div>
 
+
+<style id="lca-chat-integration">
+.chat-intake{display:none}.chat-input-row input{background:#fff!important;color:#161F2B!important;border:1px solid #E5DFD1!important}.chat-input-row input::placeholder{color:#5C6772!important;opacity:1}.chat-input-row input:focus{border-color:#C9A227!important;box-shadow:0 0 0 2px rgba(201,162,39,.18)}.quick-replies[hidden]{display:none}.chat-messages[hidden]{display:none!important}.chat-input-row[hidden]{display:none!important}.chat-status-note{font-size:.7rem;color:rgba(255,255,255,.55);padding:0 18px 8px}
+</style>
 <script>
 // nav solid on scroll
 const header = document.getElementById('siteHeader');
@@ -1049,11 +1053,7 @@ chatBtn.addEventListener('click', () => chatPanel.classList.toggle('open'));
 chatCloseBtn.addEventListener('click', closeChat);
 document.querySelectorAll('[data-open-chat]').forEach(el => el.addEventListener('click', openChat));
 
-const autoReplies = [
-  "Perfeito, anotei aqui. Um advogado da área vai analisar e te retorna em breve — normalmente em poucos minutos.",
-  "Entendido! Para agilizar, pode me confirmar se prefere ser atendido pela unidade de Salvador ou Lauro de Freitas?",
-  "Certo, já registrei sua mensagem. Se quiser adiantar o atendimento, também estamos disponíveis pelo WhatsApp."
-];
+
 
 // Basic Portuguese profanity filter — blocks the message from being sent
 // instead of relaying it. This is a simple word-list check; it is not meant
@@ -1086,47 +1086,103 @@ function botTyping(next){
   setTimeout(() => { typing.remove(); next(); }, 1000);
 }
 
-// Guided quick-reply flow (mini "robô" de triagem)
+// Atendimento humano conectado ao Supabase.
+// A anon key é pública e pode ficar neste HTML; jamais coloque service_role aqui.
+const SUPABASE_URL = 'https://kurmcfdkoobnolkbdfpq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1cm1jZmRrb29ibm9sa2JkZnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTg5MzksImV4cCI6MjEwMzQzNDkzOX0.qKBlSwQ8lhv4QGFaUo5H3lgp4efBR_u5ZvALyOH7gM4';
+const CHAT_SESSION_KEY = 'lca_chat_token';
+const CHAT_ID_KEY = 'lca_chat_id';
+const chatGreeting = document.getElementById('chatGreeting');
 const quickReplies = document.getElementById('quickReplies');
-if (quickReplies) {
-  quickReplies.querySelectorAll('.quick-reply').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const area = btn.dataset.area;
-      addMsg(area, 'out');
-      quickReplies.querySelectorAll('.quick-reply').forEach(b => b.disabled = true);
-      botTyping(() => {
-        addMsg(`Show! Já sei que é sobre ${area}. Pode me contar rapidamente o que aconteceu, ou já deixar seu nome e telefone que a equipe te chama.`, 'in');
-      });
-    });
+// fluxo: nome -> area (botões) -> telefone -> email -> conversa criada -> chat livre
+const intake = { step: 'nome', nome: '', area: '', telefone: '', email: '' };
+
+async function chamarSupabase(procedure, body){
+  if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('COLE_AQUI')) throw new Error('Configure a anon key pública do Supabase no index.html.');
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${procedure}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    body: JSON.stringify(body)
   });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || data?.hint || 'Não foi possível conectar ao atendimento.');
+  return data;
+}
+function chatAtivo(){ return !!(sessionStorage.getItem(CHAT_ID_KEY) && sessionStorage.getItem(CHAT_SESSION_KEY)); }
+function perguntar(texto){ addMsg(texto, 'in'); chatInput.placeholder = 'Digite sua resposta...'; chatInput.focus(); }
+
+async function criarConversa(){
+  const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
+    p_nome: intake.nome, p_telefone: intake.telefone, p_email: intake.email || null,
+    p_area: intake.area || null, p_mensagem_inicial: null, p_origem: 'chat_site'
+  });
+  sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
+  sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
+  addMsg(`Perfeito, ${intake.nome.split(' ')[0]}! Já registrei seus dados e nossa equipe vai continuar o atendimento pelo WhatsApp, no número ${intake.telefone}. Até já! 👋`, 'in');
+  if (quickReplies) quickReplies.hidden = true;
+  chatForm.hidden = true;
 }
 
-chatForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  if (contemPalavrao(text)) {
-    chatInput.value = '';
-    botTyping(() => {
-      addMsg('Peço desculpas, mas não consigo processar mensagens com linguagem ofensiva. Pode reescrever com outras palavras? Assim consigo te ajudar direitinho.', 'in');
-    });
+// Etapa 1: nome. Etapa 2: área (via botões). Etapa 3: telefone. Etapa 4: email -> cria conversa.
+async function processarIdentificacao(texto){
+  if (intake.step === 'nome') {
+    intake.nome = texto; intake.step = 'area';
+    addMsg(`Prazer em falar com você, ${texto.split(' ')[0]}! Qual área combina mais com o seu caso?`, 'in');
+    if (quickReplies) quickReplies.hidden = false;
+    chatInput.disabled = true; // aguarda clique num dos botões de área
     return;
   }
+  if (intake.step === 'telefone') { intake.telefone = texto; intake.step = 'email'; perguntar('Obrigado. Qual é o seu e-mail? Se preferir não informar, escreva “pular”.'); return; }
+  if (intake.step === 'email') {
+    intake.email = texto.toLowerCase() === 'pular' ? '' : texto;
+    chatInput.disabled = true;
+    try { await criarConversa(); } catch (error) { chatInput.disabled = false; addMsg(error.message || 'Não foi possível iniciar o atendimento.', 'in'); }
+    return;
+  }
+}
 
-  addMsg(text, 'out');
+function enviarParaEquipe(texto){
+  const conversaId = sessionStorage.getItem(CHAT_ID_KEY);
+  const token = sessionStorage.getItem(CHAT_SESSION_KEY);
+  if (!conversaId || !token) return processarIdentificacao(texto);
+  return chamarSupabase('sp_enviar_mensagem', { p_conversa_id: conversaId, p_remetente: 'visitante', p_texto: texto, p_token_sessao: token });
+}
+
+if (quickReplies) {
+  quickReplies.querySelectorAll('.quick-reply').forEach(btn => btn.addEventListener('click', async () => {
+    if (intake.step !== 'area') return; // botões só valem nesta etapa
+    const area = btn.dataset.area;
+    intake.area = area;
+    intake.step = 'telefone';
+    addMsg(area, 'out');
+    quickReplies.hidden = true;
+    quickReplies.querySelectorAll('.quick-reply').forEach(b => b.disabled = true);
+    chatInput.disabled = false;
+    perguntar('Show! E qual é o seu telefone ou WhatsApp para a equipe te chamar?');
+  }));
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = chatInput.value.trim();
+  if (!text || chatInput.disabled) return;
+  if (contemPalavrao(text)) { chatInput.value = ''; addMsg('Peço desculpas, mas não consigo processar mensagens com linguagem ofensiva. Pode reescrever com outras palavras?', 'in'); return; }
   chatInput.value = '';
-
-  botTyping(() => {
-    addMsg(autoReplies[Math.floor(Math.random() * autoReplies.length)], 'in');
-  });
+  addMsg(text, 'out'); // adiciona a bolha exatamente uma vez, sempre aqui
+  try { await enviarParaEquipe(text); }
+  catch (error) { addMsg(error.message || 'Não foi possível enviar sua mensagem.', 'in'); }
 });
 
-// case review form -> pre-fills WhatsApp message (no direct database write from
-// the public site; see conversation with the dev team about secure Fase 2 wiring)
+if (chatAtivo()) {
+  addMsg('Seus dados já estão registrados — nossa equipe vai continuar o atendimento pelo WhatsApp. 👋', 'in');
+  if (quickReplies) quickReplies.hidden = true;
+  chatForm.hidden = true;
+}
+
+// Avaliação gratuita: cria conversa e envia os dados ao mesmo Atendimento ao Vivo.
 const caseReviewForm = document.getElementById('caseReviewForm');
 if (caseReviewForm) {
-  caseReviewForm.addEventListener('submit', (e) => {
+  caseReviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = new FormData(caseReviewForm);
     const nome = (data.get('nome') || '').toString().trim();
@@ -1134,17 +1190,18 @@ if (caseReviewForm) {
     const email = (data.get('email') || '').toString().trim();
     const area = (data.get('area') || '').toString().trim();
     const mensagem = (data.get('mensagem') || '').toString().trim();
-
-    const texto = [
-      `Olá! Gostaria de uma avaliação gratuita do meu caso.`,
-      `Nome: ${nome}`,
-      `Telefone: ${telefone}`,
-      email ? `E-mail: ${email}` : null,
-      `Área: ${area}`,
-      mensagem ? `Caso: ${mensagem}` : null,
-    ].filter(Boolean).join('\n');
-
-    window.open(`https://wa.me/5571999190853?text=${encodeURIComponent(texto)}`, '_blank');
+    const consentimento = caseReviewForm.querySelector('input[type="checkbox"][required]');
+    if (!consentimento?.checked) { alert('Confirme a autorização de contato para enviar sua solicitação.'); return; }
+    const botao = caseReviewForm.querySelector('button[type="submit"]');
+    if (botao) { botao.disabled = true; botao.textContent = 'Enviando…'; }
+    try {
+      const conversa = await chamarSupabase('sp_iniciar_conversa_site', { p_nome: nome, p_telefone: telefone, p_email: email || null, p_area: area || null, p_mensagem_inicial: mensagem || 'Solicitação de avaliação gratuita.', p_origem: 'formulario_avaliacao' });
+      caseReviewForm.reset();
+      alert('Solicitação enviada. Nossa equipe entrará em contato em breve.');
+      sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
+      sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
+    } catch (error) { alert(error.message || 'Não foi possível enviar sua solicitação agora.'); }
+    finally { if (botao) { botao.disabled = false; botao.textContent = 'Solicitar avaliação →'; } }
   });
 }
 

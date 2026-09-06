@@ -356,45 +356,25 @@ nav.links a:hover::after{transform:scaleX(1);}
 .stat-item p{font-size:0.82rem;color:rgba(255,255,255,0.5);line-height:1.5;margin:0;max-width:none;}
 @media (max-width:760px){ .stats-grid{grid-template-columns:1fr 1fr;} }
 
-/* ---------- testimonials (whatsapp-style) ---------- */
-.testimonials{padding:130px 0;background:var(--cream);}
-.testimonials-head{max-width:560px;margin-bottom:20px;}
-.testimonials-head h2{margin-top:20px;}
-.testimonials-note{font-size:0.78rem;color:var(--stone);opacity:0.75;margin-bottom:40px;max-width:560px;}
-.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start;}
-.wa-card{
-  background:#fff;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);
-  transform:rotate(var(--tilt,0deg));transition:transform .25s ease,box-shadow .25s ease;
+/* ---------- compromissos (institutional trust section) ---------- */
+.compromissos{padding:130px 0;background:var(--cream);}
+.compromissos-head{max-width:560px;margin-bottom:56px;}
+.compromissos-head h2{margin-top:20px;}
+.compromissos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+.compromisso-card{
+  background:var(--paper);border-radius:14px;padding:34px 26px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;
+  transition:transform .25s ease,box-shadow .25s ease;
 }
-.wa-card:hover{transform:rotate(0deg) translateY(-4px);}
-.wa-card:nth-child(1){--tilt:-1.1deg;}
-.wa-card:nth-child(3){--tilt:1.1deg;}
-.wa-topbar{display:flex;align-items:center;gap:11px;background:#075E54;padding:13px 16px;color:#fff;}
-.wa-avatar{
-  width:38px;height:38px;border-radius:50%;background:#25D366;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-family:var(--sans);
-  font-weight:700;font-size:0.78rem;color:#06281f;
+.compromisso-card:hover{transform:translateY(-4px);}
+.compromisso-icon{
+  width:46px;height:46px;border-radius:50%;background:rgba(201,162,39,0.1);
+  display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0;
 }
-.wa-contact{line-height:1.3;min-width:0;}
-.wa-contact strong{display:block;font-size:0.86rem;font-weight:600;}
-.wa-contact span{display:block;font-size:0.68rem;color:rgba(255,255,255,0.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.wa-topbar-icons{margin-left:auto;display:flex;gap:12px;opacity:0.85;flex-shrink:0;}
-.wa-chat{
-  background:#E5DDD5;padding:24px 16px 20px;min-height:150px;
-  display:flex;flex-direction:column;justify-content:center;
-}
-.wa-bubble{
-  position:relative;background:#DCF8C6;border-radius:2px 10px 10px 10px;
-  padding:9px 13px 17px;font-size:0.83rem;color:#111b21;line-height:1.5;
-  box-shadow:0 1px 0.5px rgba(0,0,0,0.13);max-width:100%;
-}
-.wa-bubble::before{
-  content:"";position:absolute;top:0;left:-7px;width:0;height:0;
-  border-style:solid;border-width:0 8px 9px 0;border-color:transparent #DCF8C6 transparent transparent;
-}
-.wa-meta{position:absolute;bottom:6px;right:11px;display:flex;align-items:center;gap:3px;font-size:0.62rem;color:#667781;}
-.wa-meta svg{flex-shrink:0;}
-@media (max-width:860px){ .testimonials-grid{grid-template-columns:1fr;max-width:380px;margin:0 auto;} .wa-card{transform:none;} }
+.compromisso-card h3{font-family:var(--serif);font-size:1.02rem;font-weight:500;color:var(--navy-950);}
+.compromisso-card p{font-size:0.86rem;color:var(--stone);line-height:1.65;}
+@media (max-width:960px){ .compromissos-grid{grid-template-columns:1fr 1fr;} }
+@media (max-width:600px){ .compromissos-grid{grid-template-columns:1fr;} }
 
 /* ---------- cta final ---------- */
 .cta-final{
@@ -612,7 +592,7 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
       <h2>Um escritório que nasceu para <em>bem servir</em>.</h2>
       <p class="lead-line">Da história, o conhecimento. Do presente, a ética. Do futuro, o compromisso com uma sociedade mais justa.</p>
       <p>Sob a direção do advogado <b>Leonardo Contreiras</b>, o escritório nasceu do desejo de atuar de forma plena e objetiva na defesa de quem busca seus direitos — seja na esfera judicial, seja na extrajudicial. É um trabalho pautado no estudo constante das normas jurídicas nacionais, aliado a uma leitura atenta do contexto social de quem representamos.</p>
-      <p>Nossa equipe reúne profissionais com pós-graduação e mestrado em diferentes frentes do Direito — Público, Tributário, Trabalhista, Previdenciário, Consumidor, Civil e Penal — para oferecer uma consultoria verdadeiramente especializada, sempre orientada pela ética, pela lealdade e pelo comprometimento com o resultado.</p>
+      <p>Nossa equipe reúne profissionais com pós-graduação e mestrado em diferentes frentes do Direito — Público, Tributário, Trabalhista, Previdenciário, Consumidor, Civil e Penal — para oferecer uma consultoria qualificada, sempre orientada pela ética, pela lealdade e pelo comprometimento com quem representamos.</p>
     </div>
     <div class="sobre-side reveal">
       <div class="art-card">
@@ -676,13 +656,13 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
       </div>
       <div class="step">
         <span class="num">02</span>
-        <h3>Nossa equipe analisa</h3>
-        <p>O time responsável pela área do seu caso avalia a situação e retorna com um direcionamento claro.</p>
+        <h3>Organizamos as informações</h3>
+        <p>Direcionamos sua mensagem para o time responsável pela área do seu caso, já com o contexto necessário.</p>
       </div>
       <div class="step">
         <span class="num">03</span>
-        <h3>Você recebe um plano de ação</h3>
-        <p>Explicamos os próximos passos em linguagem clara, sem juridiquês, para você decidir com segurança.</p>
+        <h3>Você entende os próximos passos</h3>
+        <p>Explicamos como funciona o atendimento, em linguagem clara, sem juridiquês, para você decidir com segurança.</p>
       </div>
     </div>
   </div>
@@ -859,70 +839,36 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
   </div>
 </section>
 
-<section class="testimonials">
+<section class="compromissos">
   <div class="wrap">
-    <div class="testimonials-head reveal">
-      <p class="eyebrow">Depoimentos</p>
-      <h2>O que dizem sobre o nosso atendimento.</h2>
+    <div class="compromissos-head reveal">
+      <p class="eyebrow">Nosso compromisso</p>
+      <h2>Os princípios que orientam o nosso atendimento.</h2>
     </div>
-    <p class="testimonials-note reveal">* Exemplos ilustrativos de como os depoimentos aparecerão — serão substituídos pelas mensagens reais de clientes assim que autorizadas.</p>
-    <div class="testimonials-grid reveal">
+    <div class="compromissos-grid reveal">
 
-      <div class="wa-card">
-        <div class="wa-topbar">
-          <div class="wa-avatar">MC</div>
-          <div class="wa-contact">
-            <strong>Marina C.</strong>
-            <span>Direito de Família</span>
-          </div>
-          <div class="wa-topbar-icons">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>
-          </div>
-        </div>
-        <div class="wa-chat">
-          <div class="wa-bubble">
-            <p>Fui muito bem orientada durante todo o processo de guarda dos meus filhos. O Dr. Leonardo explicou cada etapa com calma e sempre respondeu rápido. Recomendo de olhos fechados!</p>
-            <span class="wa-meta">09:41 <svg width="15" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5L4.5 9L11 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 5.5L9 9L15.5 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          </div>
-        </div>
+      <div class="compromisso-card">
+        <div class="compromisso-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></div>
+        <h3>Sigilo profissional</h3>
+        <p>Toda informação compartilhada é tratada com o sigilo previsto no Estatuto da Advocacia.</p>
       </div>
 
-      <div class="wa-card">
-        <div class="wa-topbar">
-          <div class="wa-avatar">RS</div>
-          <div class="wa-contact">
-            <strong>Roberto S.</strong>
-            <span>Direito Previdenciário</span>
-          </div>
-          <div class="wa-topbar-icons">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>
-          </div>
-        </div>
-        <div class="wa-chat">
-          <div class="wa-bubble">
-            <p>Depois de anos tentando sozinho, consegui minha aposentadoria em poucos meses com a equipe. Muito profissionais e sempre honestos sobre os prazos. Obrigado, doutor!</p>
-            <span class="wa-meta">16:07 <svg width="15" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5L4.5 9L11 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 5.5L9 9L15.5 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          </div>
-        </div>
+      <div class="compromisso-card">
+        <div class="compromisso-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+        <h3>Transparência</h3>
+        <p>Explicações claras sobre cada etapa do processo, sem juridiquês desnecessário.</p>
       </div>
 
-      <div class="wa-card">
-        <div class="wa-topbar">
-          <div class="wa-avatar">JA</div>
-          <div class="wa-contact">
-            <strong>Juliana A.</strong>
-            <span>Direito do Trabalho</span>
-          </div>
-          <div class="wa-topbar-icons">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.68 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.32 1.85.55 2.81.68A2 2 0 0122 16.92z"/></svg>
-          </div>
-        </div>
-        <div class="wa-chat">
-          <div class="wa-bubble">
-            <p>Resolveram minha rescisão em tempo recorde e me mantiveram informada em cada passo pelo WhatsApp. Atendimento humano, rápido e sem burocracia. Super indico!</p>
-            <span class="wa-meta">11:23 <svg width="15" height="11" viewBox="0 0 16 11" fill="none"><path d="M1 5.5L4.5 9L11 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 5.5L9 9L15.5 1.5" stroke="#53BDEB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-          </div>
-        </div>
+      <div class="compromisso-card">
+        <div class="compromisso-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        <h3>Atendimento personalizado</h3>
+        <p>Cada caso é analisado dentro do seu contexto, com dedicação individual.</p>
+      </div>
+
+      <div class="compromisso-card">
+        <div class="compromisso-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <h3>Ética e responsabilidade</h3>
+        <p>Atuação pautada pelo Código de Ética da OAB em toda a relação com quem nos procura.</p>
       </div>
 
     </div>
@@ -972,7 +918,7 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
     </div>
     <div class="foot-bottom">
       <span>© 2026 Leonardo Contreiras Advocacia. Todos os direitos reservados.</span>
-      <span>OAB/BA</span>
+      <span>Leonardo Contreiras — OAB/BA nº [inserir número de inscrição]</span>
     </div>
   </div>
 </footer>

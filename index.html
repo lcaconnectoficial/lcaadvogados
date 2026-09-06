@@ -757,12 +757,12 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
   <div class="wrap">
     <div class="case-review-card reveal">
       <div class="case-review-copy">
-        <p class="eyebrow">Avaliação gratuita</p>
-        <h2>Solicite uma <em>Avaliação Gratuita</em> do seu caso.</h2>
-        <p class="case-review-sub">Preencha os dados abaixo — nossa equipe analisa e retorna o quanto antes, sem compromisso.</p>
+        <p class="eyebrow">Fale conosco</p>
+        <h2>Entre em contato para tratar do seu caso.</h2>
+        <p class="case-review-sub">Preencha os dados abaixo e nossa equipe entrará em contato para entender sua situação e orientar os próximos passos.</p>
         <ul class="case-review-points">
           <li>Resposta rápida, geralmente em poucas horas</li>
-          <li>Conversa sem compromisso</li>
+          <li>Atendimento direto pelo WhatsApp</li>
           <li>Atendimento em Salvador e Lauro de Freitas</li>
         </ul>
       </div>
@@ -797,7 +797,7 @@ footer{background:var(--navy-950);padding:70px 0 34px;border-top:1px solid var(-
           <input type="checkbox" required>
           <span>Concordo em ser contatado(a) pela equipe da Leonardo Contreiras Advocacia sobre minha solicitação.</span>
         </label>
-        <button type="submit" class="btn btn-gold form-submit">Solicitar avaliação gratuita</button>
+        <button type="submit" class="btn btn-gold form-submit">Solicitar atendimento</button>
         <p class="form-note">Ao enviar, você será direcionado ao WhatsApp com seus dados já preenchidos, para agilizar o atendimento.</p>
       </form>
     </div>
@@ -1179,7 +1179,7 @@ if (chatAtivo()) {
   chatForm.hidden = true;
 }
 
-// Avaliação gratuita: cria conversa e envia os dados ao mesmo Atendimento ao Vivo.
+// Solicitação de atendimento: cria conversa e envia os dados ao mesmo Atendimento ao Vivo.
 const caseReviewForm = document.getElementById('caseReviewForm');
 if (caseReviewForm) {
   caseReviewForm.addEventListener('submit', async (e) => {
@@ -1195,13 +1195,13 @@ if (caseReviewForm) {
     const botao = caseReviewForm.querySelector('button[type="submit"]');
     if (botao) { botao.disabled = true; botao.textContent = 'Enviando…'; }
     try {
-      const conversa = await chamarSupabase('sp_iniciar_conversa_site', { p_nome: nome, p_telefone: telefone, p_email: email || null, p_area: area || null, p_mensagem_inicial: mensagem || 'Solicitação de avaliação gratuita.', p_origem: 'formulario_avaliacao' });
+      const conversa = await chamarSupabase('sp_iniciar_conversa_site', { p_nome: nome, p_telefone: telefone, p_email: email || null, p_area: area || null, p_mensagem_inicial: mensagem || 'Solicitação de atendimento.', p_origem: 'formulario_avaliacao' });
       caseReviewForm.reset();
       alert('Solicitação enviada. Nossa equipe entrará em contato em breve.');
       sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
       sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
     } catch (error) { alert(error.message || 'Não foi possível enviar sua solicitação agora.'); }
-    finally { if (botao) { botao.disabled = false; botao.textContent = 'Solicitar avaliação →'; } }
+    finally { if (botao) { botao.disabled = false; botao.textContent = 'Solicitar atendimento'; } }
   });
 }
 

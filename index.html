@@ -1036,12 +1036,16 @@ function botTyping(next){
 // A anon key é pública e pode ficar neste HTML; jamais coloque service_role aqui.
 const SUPABASE_URL = 'https://kurmcfdkoobnolkbdfpq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1cm1jZmRrb29ibm9sa2JkZnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTg5MzksImV4cCI6MjEwMzQzNDkzOX0.qKBlSwQ8lhv4QGFaUo5H3lgp4efBR_u5ZvALyOH7gM4';
+const AGENTE_TRIAGEM_URL = `${SUPABASE_URL}/functions/v1/agente-triagem`;
 const CHAT_SESSION_KEY = 'lca_chat_token';
 const CHAT_ID_KEY = 'lca_chat_id';
 const chatGreeting = document.getElementById('chatGreeting');
 const quickReplies = document.getElementById('quickReplies');
-// fluxo: nome -> area (botões) -> telefone -> email -> conversa criada -> chat livre
+// fluxo de reserva (sem IA): nome -> area (botões) -> telefone -> email -> conversa criada
 const intake = { step: 'nome', nome: '', area: '', telefone: '', email: '' };
+// fluxo com IA: guarda o histórico pra mandar de contexto pra Edge Function
+let modoFixo = false; // vira true se a IA falhar ou estiver indisponível
+const historicoIA = [];
 
 async function chamarSupabase(procedure, body){
   if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('COLE_AQUI')) throw new Error('Configure a anon key pública do Supabase no index.html.');
@@ -1056,6 +1060,11 @@ async function chamarSupabase(procedure, body){
 }
 function chatAtivo(){ return !!(sessionStorage.getItem(CHAT_ID_KEY) && sessionStorage.getItem(CHAT_SESSION_KEY)); }
 function perguntar(texto){ addMsg(texto, 'in'); chatInput.placeholder = 'Digite sua resposta...'; chatInput.focus(); }
+function encerrarChat(mensagemDespedida){
+  addMsg(mensagemDespedida, 'in');
+  if (quickReplies) quickReplies.hidden = true;
+  chatForm.hidden = true;
+}
 
 async function criarConversa(){
   const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
@@ -1064,12 +1073,20 @@ async function criarConversa(){
   });
   sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
   sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
-  addMsg(`Perfeito, ${intake.nome.split(' ')[0]}! Já registrei seus dados e nossa equipe vai continuar o atendimento pelo WhatsApp, no número ${intake.telefone}. Até já! 👋`, 'in');
-  if (quickReplies) quickReplies.hidden = true;
-  chatForm.hidden = true;
+  encerrarChat(`Perfeito, ${intake.nome.split(' ')[0]}! Já registrei seus dados e nossa equipe vai continuar o atendimento pelo WhatsApp, no número ${intake.telefone}. Até já! 👋`);
+}
+
+async function criarConversaComDadosIA(dados){
+  const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
+    p_nome: dados.nome, p_telefone: dados.telefone, p_email: dados.email || null,
+    p_area: dados.area || null, p_mensagem_inicial: null, p_origem: 'chat_site'
+  });
+  sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
+  sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
 }
 
 // Etapa 1: nome. Etapa 2: área (via botões). Etapa 3: telefone. Etapa 4: email -> cria conversa.
+// Usado só quando a IA está indisponível (modoFixo = true).
 async function processarIdentificacao(texto){
   if (intake.step === 'nome') {
     intake.nome = texto; intake.step = 'area';
@@ -1087,16 +1104,51 @@ async function processarIdentificacao(texto){
   }
 }
 
+// Chama o agente de IA (Edge Function). Se ele sinalizar indisponibilidade,
+// muda pro fluxo fixo silenciosamente, sem o visitante perceber erro técnico.
+async function falarComAgenteIA(texto){
+  historicoIA.push({ role: 'user', content: texto });
+  const resposta = await fetch(AGENTE_TRIAGEM_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    body: JSON.stringify({ mensagem: texto, historico: historicoIA.slice(0, -1) })
+  });
+  const dados = await resposta.json().catch(() => null);
+
+  if (!resposta.ok || !dados || dados.disponivel === false) {
+    modoFixo = true;
+    intake.step = 'nome';
+    addMsg('Vou te ajudar por aqui mesmo. Qual é o seu nome completo?', 'in');
+    return;
+  }
+
+  historicoIA.push({ role: 'assistant', content: dados.resposta });
+  addMsg(dados.resposta, 'in');
+
+  if (dados.dados_suficientes && dados.dados) {
+    chatInput.disabled = true;
+    try {
+      await criarConversaComDadosIA(dados.dados);
+      if (quickReplies) quickReplies.hidden = true;
+      chatForm.hidden = true;
+    } catch (error) {
+      chatInput.disabled = false;
+      addMsg(error.message || 'Não foi possível registrar seus dados agora.', 'in');
+    }
+  }
+}
+
 function enviarParaEquipe(texto){
   const conversaId = sessionStorage.getItem(CHAT_ID_KEY);
   const token = sessionStorage.getItem(CHAT_SESSION_KEY);
-  if (!conversaId || !token) return processarIdentificacao(texto);
-  return chamarSupabase('sp_enviar_mensagem', { p_conversa_id: conversaId, p_remetente: 'visitante', p_texto: texto, p_token_sessao: token });
+  if (conversaId && token) return chamarSupabase('sp_enviar_mensagem', { p_conversa_id: conversaId, p_remetente: 'visitante', p_texto: texto, p_token_sessao: token });
+  if (modoFixo) return processarIdentificacao(texto);
+  return falarComAgenteIA(texto);
 }
 
 if (quickReplies) {
   quickReplies.querySelectorAll('.quick-reply').forEach(btn => btn.addEventListener('click', async () => {
-    if (intake.step !== 'area') return; // botões só valem nesta etapa
+    if (intake.step !== 'area') return; // botões só valem no fluxo fixo, etapa "área"
     const area = btn.dataset.area;
     intake.area = area;
     intake.step = 'telefone';

@@ -1010,8 +1010,8 @@ const PALAVRAS_BLOQUEADAS = [
   'idiota','imbecil','babaca','corno','filho da puta','fdp','pqp','vagabundo','vagabunda'
 ];
 function contemPalavrao(texto){
-  const limpo = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return PALAVRAS_BLOQUEADAS.some(p => limpo.includes(p.normalize('NFD').replace(/[\u0300-\u036f]/g, '')));
+  const limpo = texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return PALAVRAS_BLOQUEADAS.some(p => limpo.includes(p.normalize('NFD').replace(/[̀-ͯ]/g, '')));
 }
 
 function addMsg(text, who){
@@ -1036,6 +1036,9 @@ function botTyping(next){
 // A anon key é pública e pode ficar neste HTML; jamais coloque service_role aqui.
 const SUPABASE_URL = 'https://kurmcfdkoobnolkbdfpq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt1cm1jZmRrb29ibm9sa2JkZnBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTg5MzksImV4cCI6MjEwMzQzNDkzOX0.qKBlSwQ8lhv4QGFaUo5H3lgp4efBR_u5ZvALyOH7gM4';
+// LCAConnect é multi-tenant: cada escritório tem um id em public.escritorios.
+// Este site institucional pertence ao escritório de id 1 (LCA ADVOGADOS & ASSOCIADOS).
+const ESCRITORIO_ID = 1;
 const AGENTE_TRIAGEM_URL = `${SUPABASE_URL}/functions/v1/agente-triagem`;
 const CHAT_SESSION_KEY = 'lca_chat_token';
 const CHAT_ID_KEY = 'lca_chat_id';
@@ -1069,7 +1072,7 @@ function encerrarChat(mensagemDespedida){
 async function criarConversa(){
   const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
     p_nome: intake.nome, p_telefone: intake.telefone, p_email: intake.email || null,
-    p_area: intake.area || null, p_mensagem_inicial: null, p_origem: 'chat_site'
+    p_area: intake.area || null, p_mensagem_inicial: null, p_origem: 'chat_site', p_escritorio_id: ESCRITORIO_ID
   });
   sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
   sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
@@ -1079,7 +1082,7 @@ async function criarConversa(){
 async function criarConversaComDadosIA(dados){
   const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
     p_nome: dados.nome, p_telefone: dados.telefone, p_email: dados.email || null,
-    p_area: dados.area || null, p_mensagem_inicial: null, p_origem: 'chat_site'
+    p_area: dados.area || null, p_mensagem_inicial: null, p_origem: 'chat_site', p_escritorio_id: ESCRITORIO_ID
   });
   sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);
   sessionStorage.setItem(CHAT_ID_KEY, conversa.conversa_id);
@@ -1193,7 +1196,7 @@ if (caseReviewForm) {
     const botao = caseReviewForm.querySelector('button[type="submit"]');
     if (botao) { botao.disabled = true; botao.textContent = 'Enviando…'; }
     try {
-      const conversa = await chamarSupabase('sp_iniciar_conversa_site', { p_nome: nome, p_telefone: telefone, p_email: email || null, p_area: area || null, p_mensagem_inicial: mensagem || 'Solicitação de atendimento.', p_origem: 'formulario_avaliacao' });
+      const conversa = await chamarSupabase('sp_iniciar_conversa_site', { p_nome: nome, p_telefone: telefone, p_email: email || null, p_area: area || null, p_mensagem_inicial: mensagem || 'Solicitação de atendimento.', p_origem: 'formulario_avaliacao', p_escritorio_id: ESCRITORIO_ID });
       caseReviewForm.reset();
       alert('Solicitação enviada. Nossa equipe entrará em contato em breve.');
       sessionStorage.setItem(CHAT_SESSION_KEY, conversa.token_sessao);

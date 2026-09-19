@@ -1068,6 +1068,55 @@ function encerrarChat(mensagemDespedida){
   if (quickReplies) quickReplies.hidden = true;
   chatForm.hidden = true;
 }
+// Os botões de área ficam fixos no HTML logo após a saudação inicial. Sem
+// reposicionar, "des-esconder" o mesmo elemento faz ele aparecer no topo do
+// chat (onde ele sempre esteve no DOM) em vez de embaixo da pergunta que
+// acabou de ser feita. moveAppendChild move o elemento (não clona), então
+// isso o realoca para o fim da lista de mensagens antes de exibi-lo.
+function mostrarBotoesArea(){
+  if (!quickReplies) return;
+  chatMessages.appendChild(quickReplies);
+  quickReplies.hidden = false;
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+// Guarda o que a IA já conseguiu extrair (mesmo antes de "dados_suficientes"
+// ficar true), para que, se a IA cair no meio da conversa, o fluxo fixo não
+// peça de novo nome/telefone/área que a pessoa já informou.
+const ultimosDadosIA = { nome: null, telefone: null, email: null, area: null };
+function mesclarDadosIA(dados){
+  if (!dados) return;
+  if (dados.nome) ultimosDadosIA.nome = dados.nome;
+  if (dados.telefone) ultimosDadosIA.telefone = dados.telefone;
+  if (dados.email) ultimosDadosIA.email = dados.email;
+  if (dados.area) ultimosDadosIA.area = dados.area;
+}
+// Retoma o fluxo fixo a partir do que já se sabe (via IA ou via fluxo fixo
+// anterior), em vez de sempre reiniciar perguntando o nome de novo.
+function retomarFluxoFixo(){
+  intake.nome = intake.nome || ultimosDadosIA.nome || '';
+  intake.telefone = intake.telefone || ultimosDadosIA.telefone || '';
+  intake.email = intake.email || ultimosDadosIA.email || '';
+  intake.area = intake.area || ultimosDadosIA.area || '';
+  if (!intake.nome) {
+    intake.step = 'nome';
+    addMsg('Vou te ajudar por aqui mesmo. Qual é o seu nome completo?', 'in');
+    return;
+  }
+  if (!intake.area) {
+    intake.step = 'area';
+    addMsg(`Prazer em falar com você, ${intake.nome.split(' ')[0]}! Qual área combina mais com o seu caso?`, 'in');
+    mostrarBotoesArea();
+    chatInput.disabled = true;
+    return;
+  }
+  if (!intake.telefone) {
+    intake.step = 'telefone';
+    perguntar('Vou te ajudar por aqui mesmo. Qual é o seu telefone ou WhatsApp para a equipe te chamar?');
+    return;
+  }
+  intake.step = 'email';
+  perguntar('Vou te ajudar por aqui mesmo. Só falta o seu e-mail — se preferir não informar, escreva “pular”.');
+}
 
 async function criarConversa(){
   const conversa = await chamarSupabase('sp_iniciar_conversa_site', {
@@ -1094,7 +1143,7 @@ async function processarIdentificacao(texto){
   if (intake.step === 'nome') {
     intake.nome = texto; intake.step = 'area';
     addMsg(`Prazer em falar com você, ${texto.split(' ')[0]}! Qual área combina mais com o seu caso?`, 'in');
-    if (quickReplies) quickReplies.hidden = false;
+    mostrarBotoesArea();
     chatInput.disabled = true; // aguarda clique num dos botões de área
     return;
   }
@@ -1119,12 +1168,13 @@ async function falarComAgenteIA(texto){
   const dados = await resposta.json().catch(() => null);
 
   if (!resposta.ok || !dados || dados.disponivel === false) {
+    mesclarDadosIA(dados?.dados);
     modoFixo = true;
-    intake.step = 'nome';
-    addMsg('Vou te ajudar por aqui mesmo. Qual é o seu nome completo?', 'in');
+    retomarFluxoFixo();
     return;
   }
 
+  mesclarDadosIA(dados.dados);
   historicoIA.push({ role: 'assistant', content: dados.resposta });
   addMsg(dados.resposta, 'in');
 
